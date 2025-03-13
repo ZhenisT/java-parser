@@ -1,0 +1,38 @@
+package com.zhenis;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+@Service
+public class FileProcess extends File {
+
+    private static class Model {
+        public String name;
+        public int age;
+
+        public String getName() {
+            return name;
+        }
+
+        @Check
+        public void setAge(int a) {
+            age = a;
+        }
+    }
+
+    @Value("name = {test}")
+    private final static String mapping;
+
+    @Override
+    public void readFile(List<String> file) throws IOException {
+        String string = Files.readString(Path.of(file));
+        mapping.valueOf(string);
+    }
+}
+
+public record TestPublic(String test){}
+
+public enum Dumb{
+TOOL, WORK
+}
