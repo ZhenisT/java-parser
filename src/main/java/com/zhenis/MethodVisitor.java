@@ -31,37 +31,42 @@ public class MethodVisitor extends VoidVisitorAdapter<Void> {
         System.out.println(methodModel);
 
         // Теперь ищем все вызовы методов в теле метода, включая try, catch и finally
-        List<MethodCallExpr> methodCalls = getMethodCallsInTryCatchFinally(method);
-        for (MethodCallExpr call : methodCalls) {
-            // Извлекаем через кого был вызван метод
-            String callingObject = call.getScope().map(Object::toString).orElse("Unknown");
-            System.out.println("Method call: " + callingObject + "." + call.getName());
-        }
+        getMethodCallsInTryCatchFinally(method);
     }
 
     // Получаем все вызовы методов в блоках try, catch и finally
-    private List<MethodCallExpr> getMethodCallsInTryCatchFinally(MethodDeclaration method) {
-        List<MethodCallExpr> methodCalls = new java.util.ArrayList<>();
+    private void getMethodCallsInTryCatchFinally(MethodDeclaration method) {
         if (method.getBody().isPresent()) {
             BlockStmt body = method.getBody().get();
 
             // Ищем все блоки try-catch-finally
             body.findAll(TryStmt.class).forEach(tryStmt -> {
                 // Внутри try
-                methodCalls.addAll(tryStmt.getTryBlock().findAll(MethodCallExpr.class));
+                List<MethodCallExpr> tryCalls = tryStmt.getTryBlock().findAll(MethodCallExpr.class);
+                for (MethodCallExpr call : tryCalls) {
+                    System.out.println("Method call (try block): " + call.getName() +
+                            " through: " + call.getScope().map(Object::toString).orElse("Unknown"));
+                }
 
                 // Внутри catch
                 tryStmt.getCatchClauses().forEach(catchClause -> {
-                    methodCalls.addAll(catchClause.getBody().findAll(MethodCallExpr.class));
+                    List<MethodCallExpr> catchCalls = catchClause.getBody().findAll(MethodCallExpr.class);
+                    for (MethodCallExpr call : catchCalls) {
+                        System.out.println("Method call (catch block): " + call.getName() +
+                                " through: " + call.getScope().map(Object::toString).orElse("Unknown"));
+                    }
                 });
 
                 // Внутри finally
-                tryStmt.getFinallyBlock().ifPresent(finallyBlock ->
-                        methodCalls.addAll(finallyBlock.findAll(MethodCallExpr.class))
-                );
+                tryStmt.getFinallyBlock().ifPresent(finallyBlock -> {
+                    List<MethodCallExpr> finallyCalls = finallyBlock.findAll(MethodCallExpr.class);
+                    for (MethodCallExpr call : finallyCalls) {
+                        System.out.println("Method call (finally block): " + call.getName() +
+                                " through: " + call.getScope().map(Object::toString).orElse("Unknown"));
+                    }
+                });
             });
         }
-        return methodCalls;
     }
 
     // Цикломатическая сложность
