@@ -18,17 +18,18 @@ public class JavaParserExample {
     public static void main(String[] args) throws IOException {
 
         File file = new File("/Users/tized/IdeaProjects/java-parser/src/main/resources/Test.txt");
-        CompilationUnit cu;
+        CompilationUnit compilationUnit;
         try (FileInputStream fis = new FileInputStream(file)) {
-            cu = new JavaParser().parse(fis).getResult().orElseThrow();
+            compilationUnit = new JavaParser().parse(fis).getResult().orElseThrow();
         }
 
         List<ClassModel> classModels = new ArrayList<>();
-        cu.getTypes().forEach(type -> classModels.add(processType(type)));
+        compilationUnit.getTypes().forEach(type -> classModels.add(processType(type)));
 
         // Example output
         classModels.forEach(JavaParserExample::printClassModel);
 
+        compilationUnit.accept(new MethodVisitor(), null);
     }
 
 
