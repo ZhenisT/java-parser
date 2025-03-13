@@ -2,6 +2,8 @@ package com.zhenis;
 
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.LambdaExpr;
+import com.github.javaparser.ast.expr.MethodCallExpr;
+import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.stmt.TryStmt;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
@@ -27,6 +29,39 @@ public class MethodVisitor extends VoidVisitorAdapter<Void> {
 
         // Выводим информацию
         System.out.println(methodModel);
+
+        // Теперь ищем все вызовы методов в теле метода, включая try, catch и finally
+        List<MethodCallExpr> methodCalls = getMethodCallsInTryCatchFinally(method);
+        for (MethodCallExpr call : methodCalls) {
+            // Извлекаем через кого был вызван метод
+            String callingObject = call.getScope().map(Object::toString).orElse("Unknown");
+            System.out.println("Method call: " + callingObject + "." + call.getName());
+        }
+    }
+
+    // Получаем все вызовы методов в блоках try, catch и finally
+    private List<MethodCallExpr> getMethodCallsInTryCatchFinally(MethodDeclaration method) {
+        List<MethodCallExpr> methodCalls = new java.util.ArrayList<>();
+        if (method.getBody().isPresent()) {
+            BlockStmt body = method.getBody().get();
+
+            // Ищем все блоки try-catch-finally
+            body.findAll(TryStmt.class).forEach(tryStmt -> {
+                // Внутри try
+                methodCalls.addAll(tryStmt.getTryBlock().findAll(MethodCallExpr.class));
+
+                // Внутри catch
+                tryStmt.getCatchClauses().forEach(catchClause -> {
+                    methodCalls.addAll(catchClause.getBody().findAll(MethodCallExpr.class));
+                });
+
+                // Внутри finally
+                tryStmt.getFinallyBlock().ifPresent(finallyBlock ->
+                        methodCalls.addAll(finallyBlock.findAll(MethodCallExpr.class))
+                );
+            });
+        }
+        return methodCalls;
     }
 
     // Цикломатическая сложность

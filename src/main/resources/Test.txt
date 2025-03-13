@@ -26,13 +26,14 @@ public class FileProcess extends File {
 
     @Override
     public void readFile(List<String> file) throws IOException {
+        try {
         String string = Files.readString(Path.of(file));
         mapping.valueOf(string);
+        for (MethodCallExpr call : methodCalls) {
+                    System.out.println("Method call: " + call.getName());
+                }
+        } catch(Exception e) {
+            Files.readString(Path.of(file));
+        }
     }
-}
-
-public record TestPublic(String test){}
-
-public enum Dumb{
-TOOL, WORK
 }
